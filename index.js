@@ -28,47 +28,30 @@ async function run() {
         await client.connect();
 
         const db = client.db('book_courier');
-        const booksCollection = client.db("bookCourierDB").collection("books");
-        // const ordersCollection = client.db("bookCourierDB").collection("orders");
-        // const usersCollection = client.db("bookCourierDB").collection("users");
-        // const paymentsCollection = client.db("bookCourierDB").collection("payments");
+        const booksCollection = db.collection('books');
 
-        // parcel api
-        app.get('/book', async (req, res) => {
-
-        })
-
-        app.post('/book', async (req, res) => {
-            const parcel = req.body;
-            const result = await booksCollection.insertOne(parcel);
-            res.send(result)
-        })
-
-        app.post("/books", async (req, res) => {
-            const book = req.body;
-
-            // Default status (published/unpublished)
-            if (!book.status) {
-                book.status = "published";
+        // book api
+        app.get('/books', async (req, res) => {
+            const query = {}
+            const { email } = req.query;
+            // books?email=''&
+            if (email) {
+                query.senderEmail = email;
             }
 
+            const options = { sort: { createdAt: -1 } }
+
+            const cursor = booksCollection.find(query, options);
+            const result = await cursor.toArray();
+            res.send(result);
+        })
+
+        app.post('/books', async (req, res) => {
+            const book = req.body;
+            book.createdAt = new Date();
             const result = await booksCollection.insertOne(book);
-            res.send(result);
-        });
-
-
-        app.get("/books", async (req, res) => {
-            const result = await booksCollection.find({ status: "published" }).toArray();
-            res.send(result);
-        });
-
-
-        app.get("/books/:id", async (req, res) => {
-            const id = req.params.id;
-            const result = await booksCollection.findOne({ _id: new ObjectId(id) });
-            res.send(result);
-        });
-
+            res.send(result)
+        })
 
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
