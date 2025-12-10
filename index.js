@@ -3,7 +3,7 @@ const cors = require('cors');
 const app = express();
 require('dotenv').config();
 const port = process.env.PORT || 3000
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 // middlware
 app.use(express.json());
@@ -54,8 +54,20 @@ async function run() {
             res.send(result)
         })
 
+         
+        app.delete("/books/:id", async (req, res) => {
+            try {
+                const id = req.params.id;
+                const result = await booksCollection.deleteOne({ _id: new ObjectId(id) });
+                res.send(result);
+            } catch (err) {
+                console.log(err);
+                res.status(500).send({ message: "Failed to delete books", error: err });
+            }
+        });
 
-        // POST /allBook → Add new book
+
+        
         app.post("/allBook", async (req, res) => {
             try {
                 const book = req.body;
@@ -68,7 +80,7 @@ async function run() {
             }
         });
 
-        // GET /allBook → Get all books
+        
         app.get("/allBook", async (req, res) => {
             try {
                 const books = await allBookCollection.find().toArray();
@@ -79,8 +91,9 @@ async function run() {
             }
         });
 
-        // GET /allBook/:id → Get single book
+       
         app.get("/allBook/:id", async (req, res) => {
+            console.log(req.params)
             try {
                 const id = req.params.id;
                 const book = await allBookCollection.findOne({ _id: new ObjectId(id) });
@@ -91,7 +104,7 @@ async function run() {
             }
         });
 
-        // DELETE /allBook/:id → Delete book
+       
         app.delete("/allBook/:id", async (req, res) => {
             try {
                 const id = req.params.id;
@@ -103,7 +116,6 @@ async function run() {
             }
         });
 
-        // server start
         const PORT = process.env.PORT || 3000;
         app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
@@ -127,3 +139,5 @@ app.get('/', (req, res) => {
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
 })
+
+
