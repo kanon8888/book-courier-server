@@ -7,6 +7,8 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const stripe = require('stripe')('sk_test_51Sd0AhCxMZ2RevbYJBkBAb8t3keqSvIYxyZczXJXzaCOGEx91CS7d5uNhzj1GFNTJ0HVaCAmkaS4qjLR4xSCR32n004m5oRQtw');
 
 
+
+
 // middlware
 app.use(express.json());
 app.use(cors());
@@ -69,6 +71,112 @@ async function run() {
             const query = { _id: new ObjectId(id) }
             const result = await booksCollection.deleteOne(query);
             res.send(result);
+        })
+
+        // // payment related apis
+        // const YOURE_DOMAIN = 'http://localhost:4242';
+
+        // app.post('/payment-checkout-session', async (req, res) => {
+        //     const paymentInfo = req.body;
+        //     const amount = parseInt(paymentInfo.cost) * 100;
+        //     const session = await stripe.checkout.sessions.create({
+
+        //         line_items: [
+        //             {
+        //                 price_data: {
+        //                     currency: 'usd',
+        //                     unit_amount: amount,
+        //                     product_data: {
+        //                         name: `Please pay for: ${paymentInfo.bookName}`
+        //                     }
+        //                 },
+        //                 quantity: 1,
+        //             },
+        //         ],
+        //         mode: 'payment',
+        //         metadata: {
+        //             bookId: paymentInfo.bookId
+        //         },
+        //         customer_email: paymentInfo.senderEmail,
+        //         success_url: `${YOURE_DOMAIN}/dashboard/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+        //         cancel_url: `${YOURE_DOMAIN}/dashboard/payment-cancelled`,
+
+        //     })
+        //     res.send({ url: session.url })
+        // })
+
+        // payment related apis
+
+        const YOURE_DOMAIN = 'http://localhost:5173'; // এটা তোমার frontend port হওয়া উচিত
+
+        app.post('/payment-checkout-session', async (req, res) => {
+            try {
+                const paymentInfo = req.body;
+                const amount = parseInt(paymentInfo.cost) * 100;
+
+                const session = await stripe.checkout.sessions.create({
+                    line_items: [
+                        {
+                            price_data: {
+                                currency: 'usd',
+                                unit_amount: amount,
+                                product_data: {
+                                    name: `Please pay for: ${paymentInfo.bookName}`,
+                                },
+                            },
+                            quantity: 1,
+                        },
+                    ],
+                    mode: 'payment',
+                    metadata: {
+                        bookId: paymentInfo.bookId,
+                    },
+                    customer_email: paymentInfo.senderEmail,
+                    success_url: `${YOURE_DOMAIN}/dashboard/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+                    cancel_url: `${YOURE_DOMAIN}/dashboard/payment-cancelled`,
+                });
+
+                res.send({ url: session.url });
+
+            } catch (error) {
+                console.log("Stripe Error:", error);
+                res.status(500).send({ error: error.message });
+            }
+        });
+
+
+
+        const YOUR_DOMAIN = 'http://localhost:5173';
+        app.post('/create-checkout-session', async (req, res) => {
+            const paymentInfo = req.body;
+            const amount = Number(paymentInfo.cost) * 100;
+
+
+            const session = await stripe.checkout.sessions.create({
+                line_items: [
+                    {
+                        price_data: {
+                            currency: 'USD',
+                            unit_amount: amount,
+                            product_data: {
+                                name: paymentInfo.bookName
+                            }
+                        },
+                        quantity: 1,
+                    },
+                ],
+                customer_email: paymentInfo.senderEmail,
+                mode: 'payment',
+                metadata: {
+                    bookId: paymentInfo.bookId
+                },
+                success_url: `${YOUR_DOMAIN}/dashboard/payment-success`,
+                cancel_url: `${YOUR_DOMAIN}/dashboard/payment-cancelled`,
+            })
+
+            console.log(session)
+            res.send({ url: session.url })
+
         })
 
 
