@@ -4,6 +4,8 @@ const app = express();
 require('dotenv').config();
 const port = process.env.PORT || 3000
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const stripe = require('stripe')('sk_test_51Sd0AhCxMZ2RevbYJBkBAb8t3keqSvIYxyZczXJXzaCOGEx91CS7d5uNhzj1GFNTJ0HVaCAmkaS4qjLR4xSCR32n004m5oRQtw');
+
 
 // middlware
 app.use(express.json());
@@ -30,6 +32,7 @@ async function run() {
         const db = client.db('book_courier');
         const booksCollection = db.collection('books');
         const allBookCollection = db.collection('allBook');
+        const usersCollection = db.collection('users');
 
         // book api
         app.get('/books', async (req, res) => {
@@ -46,6 +49,12 @@ async function run() {
             const result = await cursor.toArray();
             res.send(result);
         })
+        app.get('/books/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await booksCollection.findOne(query);
+            res.send(result);
+        })
 
         app.post('/books', async (req, res) => {
             const book = req.body;
@@ -54,20 +63,16 @@ async function run() {
             res.send(result)
         })
 
-         
-        app.delete("/books/:id", async (req, res) => {
-            try {
-                const id = req.params.id;
-                const result = await booksCollection.deleteOne({ _id: new ObjectId(id) });
-                res.send(result);
-            } catch (err) {
-                console.log(err);
-                res.status(500).send({ message: "Failed to delete books", error: err });
-            }
-        });
+
+        app.delete('/books/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await booksCollection.deleteOne(query);
+            res.send(result);
+        })
 
 
-        
+
         app.post("/allBook", async (req, res) => {
             try {
                 const book = req.body;
@@ -80,7 +85,7 @@ async function run() {
             }
         });
 
-        
+
         app.get("/allBook", async (req, res) => {
             try {
                 const books = await allBookCollection.find().toArray();
@@ -91,7 +96,7 @@ async function run() {
             }
         });
 
-       
+
         app.get("/allBook/:id", async (req, res) => {
             console.log(req.params)
             try {
@@ -104,7 +109,7 @@ async function run() {
             }
         });
 
-       
+
         app.delete("/allBook/:id", async (req, res) => {
             try {
                 const id = req.params.id;
@@ -118,6 +123,25 @@ async function run() {
 
         const PORT = process.env.PORT || 3000;
         app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+        // GET user data
+        app.get("/users/:email", async (req, res) => {
+            const user = await usersCollection.findOne({ email: req.params.email });
+            res.send(user);
+        });
+
+
+        app.put("/users/:email", async (req, res) => {
+            const { name, photo } = req.body;
+
+            const result = await usersCollection.updateOne(
+                { email: req.params.email },
+                { $set: { name, photo } }
+            );
+
+            res.send(result);
+        });
+
 
 
 
