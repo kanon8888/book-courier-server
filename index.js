@@ -146,7 +146,7 @@ async function run() {
 
         // payment related apis
 
-        
+
 
         app.post('/payment-checkout-session', async (req, res) => {
             try {
@@ -185,7 +185,7 @@ async function run() {
 
 
 
-        
+
         app.post('/create-checkout-session', async (req, res) => {
             const paymentInfo = req.body;
             const amount = Number(paymentInfo.cost) * 100;
@@ -390,16 +390,16 @@ async function run() {
             res.send(result);
         });
 
-        // GET all users
-app.get('/users', async (req, res) => {
-  try {
-    const users = await usersCollection.find().toArray();
-    res.send(users);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send({ message: 'Failed to fetch users' });
-  }
-});
+        
+        app.get('/users', async (req, res) => {
+            try {
+                const users = await usersCollection.find().toArray();
+                res.send(users);
+            } catch (err) {
+                console.error(err);
+                res.status(500).send({ message: 'Failed to fetch users' });
+            }
+        });
 
 
 
