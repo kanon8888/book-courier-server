@@ -10,7 +10,7 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET);
 const crypto = require("crypto");
 const admin = require("firebase-admin");
 
-const serviceAccount = require("./book-courier-firebase-adminsdk-fbsvc.json");
+const serviceAccount = require("./book-courier-firebase-adminsdk-fbsvc-.json");
 
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
@@ -146,7 +146,7 @@ async function run() {
 
         // payment related apis
 
-        const YOURE_DOMAIN = 'http://localhost:5173';
+        
 
         app.post('/payment-checkout-session', async (req, res) => {
             try {
@@ -185,7 +185,7 @@ async function run() {
 
 
 
-        const YOUR_DOMAIN = 'http://localhost:5173';
+        
         app.post('/create-checkout-session', async (req, res) => {
             const paymentInfo = req.body;
             const amount = Number(paymentInfo.cost) * 100;
@@ -389,6 +389,18 @@ async function run() {
 
             res.send(result);
         });
+
+        // GET all users
+app.get('/users', async (req, res) => {
+  try {
+    const users = await usersCollection.find().toArray();
+    res.send(users);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: 'Failed to fetch users' });
+  }
+});
+
 
 
 
