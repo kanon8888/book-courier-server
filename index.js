@@ -30,25 +30,29 @@ function generateTrackingId() {
 app.use(express.json());
 app.use(cors());
 
-const verifyFBToken = async (req, res, next) => {
-    const token = req.headers.authorization;
 
-    if (!token) {
-        return res.status(401).send({ message: 'unauthorized access' })
+const verifyFBToken = async (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    console.log(authHeader)
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ message: 'Unauthorized access: Missing or invalid token' });
     }
+
+    const idToken = authHeader.split(' ')[1];
 
     try {
-        const idToken = token.split(' ')[1];
         const decoded = await admin.auth().verifyIdToken(idToken);
-        console.log('decoded in the token', decoded);
-        req.decoded_email = decoded.email;
+        req.decoded_email = decoded.email || null;
+        console.log(req.decoded_email)
         next();
+    } catch (err) {
+        return res.status(401).json({ message: 'Unauthorized access: Invalid token' });
     }
-    catch (err) {
-        return res.status(401).send({ message: 'unauthorized access' })
-    }
+};
 
-}
+
+
 
 
 
@@ -72,8 +76,10 @@ async function run() {
         const usersCollection = db.collection('users');
         const booksCollection = db.collection('books');
         const allBookCollection = db.collection('allBook');
+        const paymentCollection = db.collection('payment');
 
-        const paymentCollection = db.collection('payment')
+        await paymentCollection.createIndex({ transactionIb: 1 }, { unique: true })
+
 
         // book api
         app.get('/books', async (req, res) => {
@@ -97,12 +103,43 @@ async function run() {
             res.send(result);
         })
 
-        app.post('/books', async (req, res) => {
-            const book = req.body;
-            book.createdAt = new Date();
-            const result = await booksCollection.insertOne(book);
-            res.send(result)
-        })
+
+        app.post("/books", verifyFBToken, async (req, res) => {
+            console.log("REQ BODY", req.body);
+
+            const { bookName,
+                bookPrice,
+                bookAuthor,
+                senderName,
+                senderEmail,
+                senderRegion,
+                senderDistrict,
+                cost } = req.body;
+
+            if (!bookName || !bookAuthor || !bookPrice) {
+                return res.status(400).send({
+                    message: "Missing required fields",
+                    body: req.body
+                });
+            }
+
+            const result = await booksCollection.insertOne({
+                bookName,
+                bookPrice,
+                bookAuthor,
+                senderName,
+                senderEmail,
+                senderRegion,
+                senderDistrict,
+                cost,
+                createdAt: new Date()
+            });
+
+            res.send(result);
+        });
+
+
+
 
 
         app.delete('/books/:id', async (req, res) => {
@@ -390,7 +427,22 @@ async function run() {
             res.send(result);
         });
 
-        
+
+        // GET USER ROLE BY EMAIL
+        app.get("/users/:email/role", async (req, res) => {
+            const email = req.params.email;
+
+            const user = await usersCollection.findOne({ email });
+
+            if (!user) {
+                return res.send({ role: "user" }); // default
+            }
+
+            res.send({ role: user.role });
+        });
+
+
+
         app.get('/users', async (req, res) => {
             try {
                 const users = await usersCollection.find().toArray();
