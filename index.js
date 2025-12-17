@@ -416,6 +416,52 @@ async function run() {
         });
 
 
+        app.delete("/users/:id", async (req, res) => {
+            const id = req.params.id;
+
+            try {
+                const result = await usersCollection.deleteOne({
+                    _id: new ObjectId(id),
+                });
+
+                if (result.deletedCount === 1) {
+                    res.send({ success: true, message: "User deleted successfully" });
+                } else {
+                    res.status(404).send({ success: false, message: "User not found" });
+                }
+            } catch (error) {
+                res.status(500).send({
+                    success: false,
+                    message: "Failed to delete user",
+                });
+            }
+        });
+
+
+        app.patch("/users/librarian/:id", async (req, res) => {
+            const id = req.params.id;
+
+            try {
+                const result = await usersCollection.updateOne(
+                    { _id: new ObjectId(id) },
+                    { $set: { role: "librarian" } }
+                );
+
+                if (result.modifiedCount > 0) {
+                    res.send({ success: true, message: "User promoted to librarian" });
+                } else {
+                    res.status(404).send({ success: false, message: "User not found" });
+                }
+            } catch (error) {
+                res.status(500).send({
+                    success: false,
+                    message: "Failed to make librarian",
+                });
+            }
+        });
+
+
+
         app.put("/users/:email", async (req, res) => {
             const { name, photo } = req.body;
 
