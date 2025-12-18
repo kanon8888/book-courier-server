@@ -85,7 +85,7 @@ async function run() {
         app.get('/books', async (req, res) => {
             const query = {}
             const { email } = req.query;
-            // books?email=''&
+            
             if (email) {
                 query.senderEmail = email;
             }
@@ -149,41 +149,7 @@ async function run() {
             res.send(result);
         })
 
-        // // payment related apis
-        // const YOURE_DOMAIN = 'http://localhost:4242';
-
-        // app.post('/payment-checkout-session', async (req, res) => {
-        //     const paymentInfo = req.body;
-        //     const amount = parseInt(paymentInfo.cost) * 100;
-        //     const session = await stripe.checkout.sessions.create({
-
-        //         line_items: [
-        //             {
-        //                 price_data: {
-        //                     currency: 'usd',
-        //                     unit_amount: amount,
-        //                     product_data: {
-        //                         name: `Please pay for: ${paymentInfo.bookName}`
-        //                     }
-        //                 },
-        //                 quantity: 1,
-        //             },
-        //         ],
-        //         mode: 'payment',
-        //         metadata: {
-        //             bookId: paymentInfo.bookId
-        //         },
-        //         customer_email: paymentInfo.senderEmail,
-        //         success_url: `${YOURE_DOMAIN}/dashboard/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-        //         cancel_url: `${YOURE_DOMAIN}/dashboard/payment-cancelled`,
-
-        //     })
-        //     res.send({ url: session.url })
-        // })
-
-        // payment related apis
-
-
+       
 
         app.post('/payment-checkout-session', async (req, res) => {
             try {
@@ -474,14 +440,14 @@ async function run() {
         });
 
 
-        // GET USER ROLE BY EMAIL
+       
         app.get("/users/:email/role", async (req, res) => {
             const email = req.params.email;
 
             const user = await usersCollection.findOne({ email });
 
             if (!user) {
-                return res.send({ role: "user" }); // default
+                return res.send({ role: "user" }); 
             }
 
             res.send({ role: user.role });
